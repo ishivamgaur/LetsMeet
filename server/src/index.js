@@ -4,6 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import ConnectDb from "./config/db.js";
 import { connectToSocket } from "./controllers/socketManager.js";
+import userRoutes from "./routes/user.routes.js";
+import globalErrorHandler from "./utils/globalErrorHandler.js";
 
 dotenv.config();
 
@@ -12,16 +14,13 @@ const app = express();
 const server = createServer(app);
 const io = connectToSocket(server);
 
-
 app.use(cors());
 app.use(express.json({ limit: "30kb" }));
 app.use(express.urlencoded({ limit: "30kb", extended: true }));
+app.use("/api/v1/users", userRoutes);
 
 // Global Error Handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: err.message || "Something went wrong" });
-});
+app.use(globalErrorHandler);
 
 const PORT = process.env.PORT || 8000;
 ConnectDb()

@@ -2,30 +2,83 @@ import httpStatus from "http-status";
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import asyncHandler from "../utils/asyncHandler.js";
+import ApiError from "../utils/ApiError.js";
+import crypto from "crypto";
+import generateToken from "../utils/jwt.js";
 
 const register = asyncHandler(async (req, res) => {
-  const { name, username, password } = req.body;
+  if (!req.body) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Request body is missing🥲");
+  }
+  const { name, username, password } = req?.body;
+
+  if (!name || !username || !password) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Please provide all fields");
+  }
 
   const existingUser = await User.findOne({ username });
   if (existingUser) {
-    return res
-      .status(httpStatus.CONFLICT)
-      .json({ message: "User already exists" });
+    throw new ApiError(httpStatus.CONFLICT, "User already exists");
   }
 
   const hassedPassword = await bcrypt.hash(password, 10);
 
-  const newUser = new User({
-    name, 
+  const newUser = await User.create({
+    name,
     username,
-    password: hassedPassword, 
+    password: hassedPassword,
   });
 
-  await newUser.save();
+  // 🔐 Generate JWT token
+  let token = generateToken(newUser._id);
+
+  console.log("token🚀: ", token);
 
   res.status(httpStatus.CREATED).json({
     message: "User Registered",
+    user: {
+      id: newUser._id,
+      name: newUser.name,
+      username: newUser.username,
+    },
+    token,
   });
 });
 
-export { register };
+const login = asyncHandler(async (req, res) => {
+  if (!req.body) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Request body is missing🥲");
+  }
+  const { username, password } = req.body;
+  if (!username || !password) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Please provide username and password"
+    );
+  }
+
+  const user = await User.findOne({ username });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  // console.log("IsPasswordCorrect: ", isMatch);
+  if (!isMatch) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Password is incorrect");
+  }
+
+  const token = generateToken(user._id);
+
+  res.status(httpStatus.OK).json({
+    message: "Login successful",
+    user: {
+      id: user._id,
+      name: user.name,
+      username: user.username,
+    },
+    token,
+  });
+});
+
+export { register, login };
