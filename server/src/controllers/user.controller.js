@@ -7,13 +7,20 @@ import crypto from "crypto";
 import generateToken from "../utils/jwt.js";
 
 const register = asyncHandler(async (req, res) => {
-  if (!req.body) {
+  if (!req.body || Object.keys(req.body).length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Request body is missing🥲");
   }
   const { name, username, password } = req?.body;
 
-  if (!name || !username || !password) {
+  if (!name?.trim() || !username?.trim() || !password?.trim()) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Please provide all fields");
+  }
+
+  if (password.length < 6) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Password must contain 6 letters"
+    );
   }
 
   const existingUser = await User.findOne({ username });
@@ -24,8 +31,8 @@ const register = asyncHandler(async (req, res) => {
   const hassedPassword = await bcrypt.hash(password, 10);
 
   const newUser = await User.create({
-    name,
-    username,
+    name: name.trim(),
+    username: username.trim(),
     password: hassedPassword,
   });
 

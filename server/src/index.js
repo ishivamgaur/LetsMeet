@@ -30,5 +30,5 @@ ConnectDb()
     });
   })
   .catch((error) => {
-    console.log("Error occured: ", error);
+    console.log("Error occured: ", error.message);
   });
