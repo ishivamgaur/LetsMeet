@@ -16,10 +16,10 @@ const Navbar = () => {
               Join as guest
             </li>
             <li className="cursor-pointer hover:text-gray-200 transition-all duration-300">
-              <Link to={"/login"}>Login</Link>
+              <Link to={"/auth"}>Login</Link>
             </li>
             <li className="cursor-pointer hover:text-gray-200 transition-all duration-300">
-              <Link to={"/register"}>Register</Link>
+              <Link to={"/auth"}>Register</Link>
             </li>
           </ul>
         </div>

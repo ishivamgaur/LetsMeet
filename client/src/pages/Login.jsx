@@ -75,7 +75,7 @@ const Login = () => {
               <p>
                 Don't have account?{" "}
                 <span className="cursor-pointer hover:underline  hover:text-blue-500 transition-all duration-300">
-                  <Link to={"/register"}>Register</Link>
+                  <Link to={"/auth/register"}>Register</Link>
                 </span>
               </p>
             </div>

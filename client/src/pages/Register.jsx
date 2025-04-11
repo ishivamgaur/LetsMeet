@@ -92,7 +92,7 @@ const Register = () => {
             <p>
               Already have an account?{" "}
               <span className="cursor-pointer hover:underline  hover:text-blue-500 transition-all duration-300">
-                <Link to={"/login"}>Login</Link>
+                <Link to={"/auth/login"}>Login</Link>
               </span>
             </p>
           </div>
