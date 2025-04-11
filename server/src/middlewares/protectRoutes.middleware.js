@@ -5,14 +5,15 @@ import httpStatus from "http-status";
 import jwt from "jsonwebtoken";
 
 export const protectRoute = asyncHandler(async (req, res, next) => {
-  let token;
+  let token = req.cookies?.token;
+  console.log("token🚀: ", token);
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
+  // if (
+  //   req.headers.authorization &&
+  //   req.headers.authorization.startsWith("Bearer")
+  // ) {
+  //   token = req.headers.authorization.split(" ")[1];
+  // }
 
   if (!token) {
     throw new ApiError(
@@ -25,6 +26,8 @@ export const protectRoute = asyncHandler(async (req, res, next) => {
     const decode = jwt.verify(token, process.env.JWT_SECRET);
     console.log("DECODED: ", decode);
     const user = await User.findById(decode.id).select("-password");
+    console.log("DECODED USER: ", user);
+
     if (!user) {
       throw new ApiError(
         httpStatus.BAD_REQUEST,

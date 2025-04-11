@@ -41,6 +41,13 @@ const register = asyncHandler(async (req, res) => {
 
   console.log("token🚀: ", token);
 
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // use true in prod
+    sameSite: "Strict", // or "Lax" as per your need
+    maxAge: 60 * 60 * 1000, // 1 Hour
+  });
+
   res.status(httpStatus.CREATED).json({
     message: "User Registered",
     user: {
@@ -76,6 +83,13 @@ const login = asyncHandler(async (req, res) => {
   }
 
   const token = generateToken(user._id);
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // use true in prod
+    sameSite: "Strict", // or "Lax" as per your need
+    maxAge: 60 * 60 * 1000, // 1 Hour
+  });
 
   res.status(httpStatus.OK).json({
     message: "Login successful",

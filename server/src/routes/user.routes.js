@@ -21,4 +21,9 @@ router.route("/test").get(protectRoute, (req, res) => {
   });
 });
 
+// Api check route
+router.route("/check").get((req, res) => {
+  res.json({ message: "Api Working" });
+});
+
 export default router;

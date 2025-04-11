@@ -6,6 +6,7 @@ import ConnectDb from "./config/db.js";
 import { connectToSocket } from "./controllers/socketManager.js";
 import userRoutes from "./routes/user.routes.js";
 import globalErrorHandler from "./utils/globalErrorHandler.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ const server = createServer(app);
 const io = connectToSocket(server);
 
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json({ limit: "30kb" }));
 app.use(express.urlencoded({ limit: "30kb", extended: true }));
 app.use("/api/v1/users", userRoutes);
