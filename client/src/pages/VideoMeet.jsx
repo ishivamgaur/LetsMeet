@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
 
-const server = "http://localhost:8000";
+const server_url = "http://localhost:8000";
 
 const connections = {};
 
@@ -13,6 +14,7 @@ const peerConfigConnections = {
 
 export const VideoMeet = () => {
   let socketRef = useRef();
+
   let socketIdRef = useRef();
 
   let localVideoRef = useRef();
@@ -23,7 +25,7 @@ export const VideoMeet = () => {
 
   let [screenAvailable, setScreenAvailable] = useState();
 
-  let [video, setVideo] = useState();
+  let [video, setVideo] = useState([]);
 
   let [audio, setAudio] = useState();
 
@@ -41,7 +43,7 @@ export const VideoMeet = () => {
 
   const videoRef = useRef([]);
 
-  let [vidoes, setVidoes] = useState([]);
+  let [videos, setVideos] = useState([]);
 
   //* TODO
   // if (isChrome() === false) {
@@ -100,6 +102,76 @@ export const VideoMeet = () => {
     getPermissions();
   }, []);
 
+  let getUserMediaSuccess = (stream) => {};
+
+  const getUserMedia = () => {
+    if ((video && videoAvailable) || (audio && audioAvailable)) {
+      navigator.mediaDevices
+        .getUserMedia({ video: video, audio: audio })
+        .then(getUserMediaSuccess) //* getUserMediaSuccess
+        .then((stream) => {})
+        .catch((error) => console.log(error));
+    } else {
+      try {
+        let tracks = localVideoRef.current.srcObject.getTracks();
+        tracks.forEach((track) => track.stop());
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (video !== undefined || audio !== undefined) {
+      getUserMedia();
+    }
+  }, [audio, video]);
+
+  //* TODO
+  let gotMessageFromServer = (fromId, mesage) => {};
+
+  //* TODO
+  let addMessage = () => {};
+
+  let connectToSocketServer = () => {
+    socketRef.current = io.connect(server_url, { secure: false });
+
+    socketRef.current.on("signal", gotMessageFromServer);
+
+    socketRef.current.on("connect", () => {
+      socketRef.current.emit("join-call", window.location.href);
+
+      socketIdRef.current = socketRef.current.id;
+
+      socketRef.current.on("chat-message", addMessage);
+
+      socketRef.current.on("user-left", (id) => {
+        setVideo((videos) => videos.filter((video) => video.socketId !== id));
+      });
+
+      socketRef.current.on("user-joined", (id, clients) => {
+        clients.forEach((socketListId) => {
+          
+          connections[socketListId] = new RTCPeerConnection(peerConfigConnections);
+
+
+        })
+      })
+    });
+  };
+
+  let getMedia = () => {
+    setVideo(videoAvailable);
+    setAudio(videoAvailable);
+
+    connectToSocketServer();
+  };
+
+  let connect = () => {
+    setAskForUsername(false);
+    getMedia();
+  };
+
   return (
     <div className="w-full h-screen">
       {/* Video meet component {window.location.href} */}
@@ -120,7 +192,10 @@ export const VideoMeet = () => {
               className="w-full border-2 border-gray-800 focus:border-gray-500 transition-all duration-300 rounded-md outline-none px-5 py-2"
             />
           </div>
-          <button className="bg-blue-600 mt-4 hover:bg-blue-700 px-5 py-2 rounded-md cursor-pointer text-gray-200 transition-all duration-300">
+          <button
+            className="bg-blue-600 mt-4 hover:bg-blue-700 px-5 py-2 rounded-md cursor-pointer text-gray-200 transition-all duration-300"
+            onClick={connect}
+          >
             Connnect
           </button>
 
