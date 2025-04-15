@@ -45,6 +45,8 @@ export const VideoMeet = () => {
 
   let [videos, setVideos] = useState([]);
 
+  let [setLocalDescription, localDescription] = useState("");
+
   //* TODO
   // if (isChrome() === false) {
 
@@ -151,12 +153,87 @@ export const VideoMeet = () => {
 
       socketRef.current.on("user-joined", (id, clients) => {
         clients.forEach((socketListId) => {
-          
-          connections[socketListId] = new RTCPeerConnection(peerConfigConnections);
+          connections[socketListId] = new RTCPeerConnection(
+            peerConfigConnections
+          );
 
+          connections[socketListId].onicecandidate = (event) => {
+            if (event.candidate != null) {
+              socketRef.current.emit(
+                "signal",
+                socketListId,
+                JSON.stringify({ ice: event.candidate })
+              );
+            }
+          };
 
-        })
-      })
+          connections[socketListId].onaddstream = (event) => {
+            let videoExists = videoRef.current.find(
+              (video) => video.socketId === socketListId
+            );
+
+            if (videoExists) {
+              setVideo((videos) => {
+                const updatedVideos = videos.map((video) => {
+                  video.socketId === socketListId
+                    ? { ...video, stream: event.stream }
+                    : video;
+                });
+
+                videoRef.current = updatedVideos;
+                return updatedVideos;
+              });
+            } else {
+              let newVideo = {
+                socketId: socketListId,
+                stream: event.stream,
+                autoPlay: true,
+                playsinline: true,
+              };
+
+              setVideos((videos) => {
+                const updatedVideos = [...videos, newVideo];
+                videoRef.current = updatedVideos;
+                return updatedVideos;
+              });
+            }
+          };
+
+          if (window.localStream !== undefined && window.localStream !== null) {
+            connections[socketListId].addStream(window.localStream);
+          } else {
+            //* TODO BLACKSILENCE
+            // let blackSilence
+          }
+        });
+
+        if (id === socketIdRef.current) {
+          for (let id2 in connections) {
+            if (id2 === socketIdRef.current) continue;
+
+            try {
+              connections[id2].addStream(window.localStream);
+            } catch (error) {
+              console.log("Error.: ", error);
+            }
+
+            connections[id2].createOffer().then((description) => {
+              connections[id2]
+                .setLocalDescription(description)
+                .then(() => {
+                  socketRef.current.emit(
+                    "signal",
+                    id2,
+                    JSON.stringify({
+                      sdp: connections[id2].localDescription,
+                    })
+                  );
+                })
+                .catch((error) => console.log(error));
+            });
+          }
+        }
+      });
     });
   };
 
