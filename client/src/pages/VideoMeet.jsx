@@ -45,8 +45,6 @@ export const VideoMeet = () => {
 
   let [videos, setVideos] = useState([]);
 
-  let [setLocalDescription, localDescription] = useState("");
-
   //* TODO
   // if (isChrome() === false) {
 
@@ -104,7 +102,107 @@ export const VideoMeet = () => {
     getPermissions();
   }, []);
 
-  let getUserMediaSuccess = (stream) => {};
+  let getUserMediaSuccess = (stream) => {
+    try {
+      window.localStream.getTracks().forEach((track) => track.stop());
+    } catch (error) {
+      console.log(error);
+    }
+
+    window.localStream = stream;
+    localVideoRef.current.srcObject = stream;
+
+    for (let id in connections) {
+      if (id === socketIdRef.current) continue;
+
+      connections[id].addStream(window.localStream);
+
+      connections[id]
+        .createOffer()
+        .then((description) => {
+          connections[id]
+            .setLocalDescription(description)
+            .then(() => {
+              socketIdRef.current.emit(
+                "signal",
+                id,
+                JSON.stringify({ sdp: connections[id].localDescription })
+              );
+            })
+            .catch((error) => console.log(error));
+        })
+        .catch((error) => console.log(error));
+    }
+
+    stream.getTracks().forEach(
+      (tracks) =>
+        (tracks.onended = () => {
+          setVideo(false);
+          setAudio(false);
+
+          try {
+            let tracks = localVideoRef.current.srcObject.getTracks();
+            tracks.forEach((track) => track.stop());
+          } catch (error) {
+            console.log(error);
+          }
+
+          //* TODO BlackSilence
+          // let blackSilence
+
+          let blackSilence = (...args) =>
+            new MediaStream([black(...args), silence()]);
+
+          window.localStream = blackSilence();
+          localVideoRef.current.srcObject = window.localStream;
+
+          for (let id in connections) {
+            connections[id].addStream(window.localStream);
+
+            connections[id].createOffer().then((description) => {
+              connections[id].setLocalDescription(description).then(() => {
+                socketRef.current.emit(
+                  "signal",
+                  id,
+                  JSON.stringify({ sdp: connections[id].localDescription })
+                );
+              });
+            });
+          }
+        })
+    );
+  };
+
+  //* Silence func Audio
+  let silence = () => {
+    let context = new AudioContext();
+    let oscillator = context.createOscillator();
+
+    let destination = oscillator.connect(
+      context.createMediaStreamDestination()
+    );
+
+    oscillator.start();
+    context.resume();
+
+    return Object.assign(destination.stream.getAudioTracks()[0], {
+      enabled: false,
+    });
+  };
+
+  //* Black canvas
+  let black = ({ width = 640, height = 480 } = {}) => {
+    let canvas = Object.assign(document.createElement("canvas"), {
+      width,
+      height,
+    });
+
+    canvas.getContext("2d").fillRect(0, 0, width, height);
+    let stream = canvas.captureStream();
+    return Object.assign(stream.getVideoTracks()[0], {
+      enabled: false,
+    });
+  };
 
   const getUserMedia = () => {
     if ((video && videoAvailable) || (audio && audioAvailable)) {
@@ -130,7 +228,44 @@ export const VideoMeet = () => {
   }, [audio, video]);
 
   //* TODO
-  let gotMessageFromServer = (fromId, mesage) => {};
+  let gotMessageFromServer = (fromId, message) => {
+    let signal = JSON.parse(message);
+
+    if (fromId !== socketIdRef.current) {
+      if (signal.sdp) {
+        connections[fromId]
+          .setRemoteDescription(new RTCSessionDescription(signal.sdp))
+          .then(() => {
+            if (signal.sdp.type === "offer") {
+              connections[fromId]
+                .createAnswer()
+                .then((description) => {
+                  connections[fromId]
+                    .setLocalDescription(description)
+                    .then(() => {
+                      socketRef.current.emit(
+                        "signal",
+                        fromId,
+                        JSON.stringify({
+                          sdp: connections[fromId].localDescription,
+                        })
+                      );
+                    })
+                    .catch((error) => console.log(error));
+                })
+                .catch((error) => console.log(error));
+            }
+          })
+          .then((error) => console.log(error));
+      }
+
+      if (signal.ice) {
+        connections[fromId]
+          .addIceCandidate(new RTCIceCandidate(signal.ice))
+          .catch((error) => console.log(error));
+      }
+    }
+  };
 
   //* TODO
   let addMessage = () => {};
@@ -204,6 +339,12 @@ export const VideoMeet = () => {
           } else {
             //* TODO BLACKSILENCE
             // let blackSilence
+
+            let blackSilence = (...args) =>
+              new MediaStream([black(...args), silence()]);
+
+            window.localStream = blackSilence();
+            connections[socketListId].addStream(window.localStream);
           }
         });
 
@@ -280,7 +421,7 @@ export const VideoMeet = () => {
 
           <div className="mt-5">
             <video
-              className="bg-[#1872d182] scale-x-[-1] w-[450px] h-[340px] rounded-md object-cover "
+              className="bg-[#1871d124] scale-x-[-1] w-[450px] h-[340px] rounded-md object-cover "
               ref={localVideoRef}
               muted
               autoPlay
@@ -288,7 +429,14 @@ export const VideoMeet = () => {
           </div>
         </div>
       ) : (
-        <></>
+        <>
+          <video
+            className="bg-[#1871d124] scale-x-[-1] w-[450px] h-[340px] rounded-md object-cover "
+            ref={localVideoRef}
+            autoPlay
+            muted
+          ></video>
+        </>
       )}
     </div>
   );
