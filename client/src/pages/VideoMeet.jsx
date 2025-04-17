@@ -104,7 +104,9 @@ export const VideoMeet = () => {
 
   let getUserMediaSuccess = (stream) => {
     try {
-      window.localStream.getTracks().forEach((track) => track.stop());
+      if (window.localStream) {
+        window.localStream.getTracks().forEach((track) => track.stop());
+      }
     } catch (error) {
       console.log(error);
     }
@@ -123,7 +125,7 @@ export const VideoMeet = () => {
           connections[id]
             .setLocalDescription(description)
             .then(() => {
-              socketIdRef.current.emit(
+              socketRef.current.emit(
                 "signal",
                 id,
                 JSON.stringify({ sdp: connections[id].localDescription })
@@ -227,42 +229,50 @@ export const VideoMeet = () => {
     }
   }, [audio, video]);
 
-  //* TODO
+  //* Accepting and sending offer for connection
   let gotMessageFromServer = (fromId, message) => {
-    let signal = JSON.parse(message);
+    const signal = JSON.parse(message);
+    const peer = connections[fromId];
 
-    if (fromId !== socketIdRef.current) {
-      if (signal.sdp) {
-        connections[fromId]
-          .setRemoteDescription(new RTCSessionDescription(signal.sdp))
+    if (fromId === socketIdRef.current || !peer) return;
+
+    // Handle SDP
+    if (signal.sdp) {
+      const desc = new RTCSessionDescription(signal.sdp);
+
+      if (desc.type === "offer") {
+        if (peer.signalingState !== "stable") {
+          console.warn("Skipping offer because signaling is not stable.");
+          return;
+        }
+
+        peer
+          .setRemoteDescription(desc)
+          .then(() => peer.createAnswer())
+          .then((answer) => peer.setLocalDescription(answer))
           .then(() => {
-            if (signal.sdp.type === "offer") {
-              connections[fromId]
-                .createAnswer()
-                .then((description) => {
-                  connections[fromId]
-                    .setLocalDescription(description)
-                    .then(() => {
-                      socketRef.current.emit(
-                        "signal",
-                        fromId,
-                        JSON.stringify({
-                          sdp: connections[fromId].localDescription,
-                        })
-                      );
-                    })
-                    .catch((error) => console.log(error));
-                })
-                .catch((error) => console.log(error));
-            }
+            socketRef.current.emit(
+              "signal",
+              fromId,
+              JSON.stringify({ sdp: peer.localDescription })
+            );
           })
-          .then((error) => console.log(error));
+          .catch((err) => console.error("Error handling offer & answer:", err));
+      } else if (desc.type === "answer") {
+        peer
+          .setRemoteDescription(desc)
+          .catch((err) => console.error("Error setting remote answer:", err));
       }
+    }
 
-      if (signal.ice) {
-        connections[fromId]
+    // Handle ICE
+    if (signal.ice) {
+      if (peer.remoteDescription && peer.remoteDescription.type) {
+        peer
           .addIceCandidate(new RTCIceCandidate(signal.ice))
-          .catch((error) => console.log(error));
+          .catch((err) => console.error("Error adding ICE candidate:", err));
+      } else {
+        console.warn("ICE received before remote description was set.");
       }
     }
   };
@@ -283,7 +293,7 @@ export const VideoMeet = () => {
       socketRef.current.on("chat-message", addMessage);
 
       socketRef.current.on("user-left", (id) => {
-        setVideo((videos) => videos.filter((video) => video.socketId !== id));
+        setVideos((videos) => videos.filter((video) => video.socketId !== id));
       });
 
       socketRef.current.on("user-joined", (id, clients) => {
@@ -308,12 +318,12 @@ export const VideoMeet = () => {
             );
 
             if (videoExists) {
-              setVideo((videos) => {
-                const updatedVideos = videos.map((video) => {
+              setVideos((videos) => {
+                const updatedVideos = videos.map((video) =>
                   video.socketId === socketListId
                     ? { ...video, stream: event.stream }
-                    : video;
-                });
+                    : video
+                );
 
                 videoRef.current = updatedVideos;
                 return updatedVideos;
@@ -390,12 +400,14 @@ export const VideoMeet = () => {
     getMedia();
   };
 
+  console.log(videos);
+
   return (
     <div className="w-full h-screen">
       {/* Video meet component {window.location.href} */}
 
       {askForUsername === true ? (
-        <div className=" w-full h-full p-10 ">
+        <div className=" w-full h-full ">
           <h1 className="text-4xl">Enter into Lobby</h1>
           <div className="flex w-1/4  flex-col gap-1 overflow-hidden mt-4">
             <label htmlFor="username" className="text-gray-500 text-md">
@@ -421,7 +433,7 @@ export const VideoMeet = () => {
 
           <div className="mt-5">
             <video
-              className="bg-[#1871d124] scale-x-[-1] w-[450px] h-[340px] rounded-md object-cover "
+              className="bg-[#1871d124] border-2 scale-x-[-1] w-[450px] h-[340px] rounded-md object-cover "
               ref={localVideoRef}
               muted
               autoPlay
@@ -429,14 +441,33 @@ export const VideoMeet = () => {
           </div>
         </div>
       ) : (
-        <>
+        <div className="relative w-full h-full ">
           <video
-            className="bg-[#1871d124] scale-x-[-1] w-[450px] h-[340px] rounded-md object-cover "
+            className="bg-[#1871d124] absolute bottom-0 left-0 border-2 scale-x-[-1] h-[200px] rounded-md object-cover "
             ref={localVideoRef}
             autoPlay
             muted
           ></video>
-        </>
+
+          <div className="absolute top-0 w-full h-[610px] bg-[#010713ab] ">
+            {videos.map((video) => (
+              <div key={video.socketId} className="">
+                <h1 className="text-3xl">Remote Video</h1>
+                <h2>{video.socketId}</h2>
+                <video
+                  className="bg-[#000000] border-2 border-red-400 scale-x-[-1]  h-[520px] rounded-md object-cover"
+                  ref={(ref) => {
+                    if (ref && video.stream) {
+                      ref.srcObject = video.stream;
+                    }
+                  }}
+                  autoPlay
+                  muted
+                ></video>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

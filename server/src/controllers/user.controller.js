@@ -39,12 +39,10 @@ const register = asyncHandler(async (req, res) => {
   // 🔐 Generate JWT token
   let token = generateToken(newUser._id);
 
-  console.log("token🚀: ", token);
-
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // use true in prod
-    sameSite: "Strict", // or "Lax" as per your need
+    sameSite: "Strict", 
     maxAge: 60 * 60 * 1000, // 1 Hour
   });
 
@@ -87,7 +85,7 @@ const login = asyncHandler(async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // use true in prod
-    sameSite: "Strict", // or "Lax" as per your need
+    sameSite: "Strict",
     maxAge: 60 * 60 * 1000, // 1 Hour
   });
 

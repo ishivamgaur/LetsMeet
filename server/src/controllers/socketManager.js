@@ -15,6 +15,7 @@ export const connectToSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
+    console.log("SOMETHING CONNECTED 📞")
     //* JOIN-CALL
     socket.on("join-call", (path) => {
       if (connections[path] === undefined) {
@@ -48,7 +49,7 @@ export const connectToSocket = (server) => {
         }
       }
     });
-
+ 
     //* SIGNAL
     socket.on("signal", (toId, message) => {
       io.to(toId).emit("signal", socket.id, message);
