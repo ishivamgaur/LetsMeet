@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import { FaVideo } from "react-icons/fa";
+import { FaVideoSlash } from "react-icons/fa";
+import { MdCallEnd } from "react-icons/md";
+import { IoMdMic } from "react-icons/io";
+import { IoMdMicOff } from "react-icons/io";
+import { MdScreenShare } from "react-icons/md";
+import { MdStopScreenShare } from "react-icons/md";
+import { IoChatboxEllipsesSharp } from "react-icons/io5";
 
 const server_url = "http://localhost:8000";
 
@@ -193,7 +201,7 @@ export const VideoMeet = () => {
   };
 
   //* Black canvas
-  let black = ({ width = 640, height = 480 } = {}) => {
+  let black = ({ width = 600, height = 480 } = {}) => {
     let canvas = Object.assign(document.createElement("canvas"), {
       width,
       height,
@@ -348,8 +356,6 @@ export const VideoMeet = () => {
             connections[socketListId].addStream(window.localStream);
           } else {
             //* TODO BLACKSILENCE
-            // let blackSilence
-
             let blackSilence = (...args) =>
               new MediaStream([black(...args), silence()]);
 
@@ -365,7 +371,7 @@ export const VideoMeet = () => {
             try {
               connections[id2].addStream(window.localStream);
             } catch (error) {
-              console.log("Error.: ", error);
+              console.log("Error : ", error);
             }
 
             connections[id2].createOffer().then((description) => {
@@ -402,6 +408,13 @@ export const VideoMeet = () => {
 
   console.log(videos);
 
+  let handleVideo = () => {
+    setVideo(!video);
+  };
+
+  let handleAudio = () => {
+    setAudio(!audio);
+  };
   return (
     <div className="w-full h-screen">
       {/* Video meet component {window.location.href} */}
@@ -430,7 +443,6 @@ export const VideoMeet = () => {
           </button>
 
           {/* Video div */}
-
           <div className="mt-5">
             <video
               className="bg-[#1871d124] border-2 scale-x-[-1] w-[450px] h-[340px] rounded-md object-cover "
@@ -441,21 +453,59 @@ export const VideoMeet = () => {
           </div>
         </div>
       ) : (
-        <div className="relative w-full h-full ">
+        <div className="relative w-full h-full bg-gray-950 ">
+          {/* Your video */}
           <video
-            className="bg-[#1871d124] absolute bottom-0 left-0 border-2 scale-x-[-1] h-[200px] rounded-md object-cover "
+            className="absolute z-[1000] bottom-20 right-10 border-2 scale-x-[-1] h-[200px] w-[300px] rounded-md object-cover "
             ref={localVideoRef}
             autoPlay
             muted
           ></video>
 
-          <div className="absolute top-0 w-full h-[610px] bg-[#010713ab] ">
+          <div className="absolute bottom-5 text-center w-full flex items-center justify-center z-[1000]">
+            <div className="flex items-center justify-center text-4xl gap-4 border-2 border-gray-600 w-max px-10 rounded-4xl py-2">
+              <div onClick={handleVideo}>
+                {video === true ? (
+                  <FaVideo className="cursor-pointer text-white" />
+                ) : (
+                  <FaVideoSlash className="cursor-pointer text-white" />
+                )}
+              </div>
+              <MdCallEnd className="cursor-pointer text-red-500" />
+
+              <div onClick={handleAudio}>
+                {audio === true ? (
+                  <IoMdMic className="cursor-pointer text-white" />
+                ) : (
+                  <IoMdMicOff className="cursor-pointer text-white" />
+                )}
+              </div>
+              {screenAvailable === true ? (
+                <div>
+                  {screen === true ? (
+                    <MdScreenShare className="cursor-pointer text-white" />
+                  ) : (
+                    <MdStopScreenShare className="cursor-pointer text-white" />
+                  )}
+                </div>
+              ) : (
+                <></>
+              )}
+              <div className="relative cursor-pointer select-none">
+                <IoChatboxEllipsesSharp className="cursor-pointer text-white" />
+                <p className="absolute bg-orange-600 text-white px-1 -top-2 -right-2 text-[19px] font-semibold w-auto h-auto rounded-full flex items-center justify-center">
+                  {newMessages}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute top-0 h-full w-full flex gap-10 flex-wrap overflow-y-auto p-10">
             {videos.map((video) => (
               <div key={video.socketId} className="">
-                <h1 className="text-3xl">Remote Video</h1>
                 <h2>{video.socketId}</h2>
                 <video
-                  className="bg-[#000000] border-2 border-red-400 scale-x-[-1]  h-[520px] rounded-md object-cover"
+                  className="border-2 border-red-400 scale-x-[-1]  h-[350px] w-[450px] rounded-md object-cover"
                   ref={(ref) => {
                     if (ref && video.stream) {
                       ref.srcObject = video.stream;
