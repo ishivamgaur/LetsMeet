@@ -37,7 +37,7 @@ export const VideoMeet = () => {
 
   let [audio, setAudio] = useState();
 
-  let [screen, setScreen] = useState();
+  let [screen, setScreen] = useState(false);
 
   let [messages, setMessages] = useState([]);
 
@@ -52,6 +52,8 @@ export const VideoMeet = () => {
   const videoRef = useRef([]);
 
   let [videos, setVideos] = useState([]);
+
+  let [showModel, setShowModel] = useState(false);
 
   //* TODO
   // if (isChrome() === false) {
@@ -286,7 +288,16 @@ export const VideoMeet = () => {
   };
 
   //* TODO
-  let addMessage = () => {};
+  let addMessage = (data, sender, socketIdSender) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { sender: sender, data: data },
+    ]);
+
+    if (socketIdSender !== socketIdRef.current) {
+      setMessages((prevMessages) => [...(prevMessages + 1)]);
+    }
+  };
 
   let connectToSocketServer = () => {
     socketRef.current = io.connect(server_url, { secure: false });
@@ -415,8 +426,110 @@ export const VideoMeet = () => {
   let handleAudio = () => {
     setAudio(!audio);
   };
+
+  let getDisplayMediaSuccess = (stream) => {
+    try {
+      if (window.localStream) {
+        window.localStream.getTracks().forEach((track) => track.stop());
+      }
+    } catch (err) {
+      console.log(err);
+    }
+
+    window.localStream = stream;
+    localVideoRef.current.srcObject = stream;
+
+    for (let id in connections) {
+      if (id === socketIdRef.current) continue;
+
+      connections[id].addStream(window.localStream);
+      connections[id]
+        .createOffer()
+        .then((description) => {
+          connections[id]
+            .setLocalDescription(description)
+            .then(() => {
+              socketRef.current.emit(
+                "signal",
+                id,
+                JSON.stringify({ sdp: connections[id].localDescription })
+              );
+            })
+            .catch((err) => console.log(err));
+        })
+        .catch((err) => console.log(err));
+    }
+
+    stream.getTracks().forEach(
+      (track) =>
+        (track.onended = () => {
+          stopScreenShare();
+        })
+    );
+  };
+
+  const stopScreenShare = () => {
+    setScreen(false);
+    try {
+      if (window.localStream) {
+        window.localStream.getTracks().forEach((track) => track.stop());
+      }
+    } catch (err) {
+      console.log(err);
+    }
+
+    getUserMedia();
+  };
+
+  let getDisplayMedia = async () => {
+    setVideo(false);
+    if (screen) {
+      try {
+        if (navigator.mediaDevices.getDisplayMedia) {
+          const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: true,
+          });
+          getDisplayMediaSuccess(stream);
+        }
+      } catch (err) {
+        console.log(err);
+
+        setScreen(false);
+      }
+    } else {
+      stopScreenShare();
+    }
+  };
+
+  useEffect(() => {
+    if (screen === true) {
+      getDisplayMedia();
+    } else if (screen === false) {
+      setVideo(true);
+      getUserMedia();
+    }
+  }, [screen]);
+
+  let handleScreenShare = () => {
+    setScreen(!screen);
+  };
+
+  // console.log("screen:", screen);
+
+  let sendMessage = () => {
+    console.log(message);
+    console.log("messages: ", messages);
+    if (message.trim() !== "") {
+      socketRef.current.emit("chat-message", message, username);
+      setMessage("");
+    }
+  };
+
+  console.log(messages)
+
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-screen p-10">
       {/* Video meet component {window.location.href} */}
 
       {askForUsername === true ? (
@@ -453,15 +566,37 @@ export const VideoMeet = () => {
           </div>
         </div>
       ) : (
-        <div className="relative w-full h-full bg-gray-950 ">
+        <div className="relative w-full h-full ">
           {/* Your video */}
-          <video
-            className="absolute z-[1000] bottom-20 right-10 border-2 scale-x-[-1] h-[200px] w-[300px] rounded-md object-cover "
-            ref={localVideoRef}
-            autoPlay
-            muted
-          ></video>
+          <div>
+            <video
+              className="absolute z-[1000] bottom-20 left-10 border-2 h-[200px] w-[300px] rounded-md object-cover "
+              ref={localVideoRef}
+              autoPlay
+              muted
+            ></video>
+          </div>
 
+          {/* Remote Videos */}
+          <div className="absolute top-0 h-full w-full flex gap-10 flex-wrap overflow-y-auto p-10">
+            {videos.map((video) => (
+              <div key={video.socketId} className="">
+                <h2>{video.socketId}</h2>
+                <video
+                  className="border-2 border-red-400 h-[350px] w-[450px] rounded-md object-contain"
+                  ref={(ref) => {
+                    if (ref && video.stream) {
+                      ref.srcObject = video.stream;
+                    }
+                  }}
+                  autoPlay
+                  muted
+                ></video>
+              </div>
+            ))}
+          </div>
+
+          {/* Icons */}
           <div className="absolute bottom-5 text-center w-full flex items-center justify-center z-[1000]">
             <div className="flex items-center justify-center text-4xl gap-4 border-2 border-gray-600 w-max px-10 rounded-4xl py-2">
               <div onClick={handleVideo}>
@@ -481,7 +616,7 @@ export const VideoMeet = () => {
                 )}
               </div>
               {screenAvailable === true ? (
-                <div>
+                <div onClick={handleScreenShare}>
                   {screen === true ? (
                     <MdScreenShare className="cursor-pointer text-white" />
                   ) : (
@@ -491,7 +626,10 @@ export const VideoMeet = () => {
               ) : (
                 <></>
               )}
-              <div className="relative cursor-pointer select-none">
+              <div
+                className="relative cursor-pointer select-none"
+                onClick={() => setShowModel(!showModel)}
+              >
                 <IoChatboxEllipsesSharp className="cursor-pointer text-white" />
                 <p className="absolute bg-orange-600 text-white px-1 -top-2 -right-2 text-[19px] font-semibold w-auto h-auto rounded-full flex items-center justify-center">
                   {newMessages}
@@ -500,23 +638,45 @@ export const VideoMeet = () => {
             </div>
           </div>
 
-          <div className="absolute top-0 h-full w-full flex gap-10 flex-wrap overflow-y-auto p-10">
-            {videos.map((video) => (
-              <div key={video.socketId} className="">
-                <h2>{video.socketId}</h2>
-                <video
-                  className="border-2 border-red-400 scale-x-[-1]  h-[350px] w-[450px] rounded-md object-cover"
-                  ref={(ref) => {
-                    if (ref && video.stream) {
-                      ref.srcObject = video.stream;
-                    }
-                  }}
-                  autoPlay
-                  muted
-                ></video>
+          <>
+            {/* Chat-Room  */}
+            <div
+              className={`chat-component  ${
+                showModel ? "scale-100" : "scale-0"
+              } absolute right-0 top-0 h-[80%] w-[400px] bg-gray-900 transition-all duration-300 p-5 border-2 border-gray-600 rounded-xl`}
+            >
+              <div className="h-[85%] overflow-y-auto custom-scrollbar">
+                {/* <p className="px-2 mx-2 mb-2 py-1 bg-gray-950">Hello rishav</p>
+                <p className="px-2 mx-2 mb-2 py-1 bg-gray-950">Hello rishav</p>
+                <p className="px-2 mx-2 mb-2 py-1 bg-gray-950">Hello rishav</p>
+                 */}
+
+                {messages.map((message) => (
+                  <div>
+                    <p className="px-2">{message.sender} </p>
+                    <p className="px-2 mx-2 mb-2 py-1 bg-gray-950">
+                      Hello rishav
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+
+              <div className="h-[10%] mt-[5%] flex border-2 border-gray-600 rounded-md overflow-hidden">
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="border-none px-4 outline-none w-full h-full "
+                />
+                <button
+                  className="bg-green-800 hover:bg-green-900 transition-all duration-300 px-6 text-white cursor-pointer"
+                  onClick={sendMessage}
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </>
         </div>
       )}
     </div>

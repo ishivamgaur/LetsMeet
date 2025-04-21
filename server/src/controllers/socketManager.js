@@ -15,7 +15,7 @@ export const connectToSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log("SOMETHING CONNECTED 📞")
+    console.log("SOMETHING CONNECTED 📞");
     //* JOIN-CALL
     socket.on("join-call", (path) => {
       if (connections[path] === undefined) {
@@ -49,7 +49,7 @@ export const connectToSocket = (server) => {
         }
       }
     });
- 
+
     //* SIGNAL
     socket.on("signal", (toId, message) => {
       io.to(toId).emit("signal", socket.id, message);
@@ -57,7 +57,7 @@ export const connectToSocket = (server) => {
 
     //* CHAT-MESSAGE
     socket.on("chat-message", (data, sender) => {
-      const [matchingRoom, found] = Object.entries().reduce(
+      const [matchingRoom, found] = Object.entries(connections).reduce(
         ([room, isFound], [roomKey, roomValue]) => {
           if (!isFound && roomValue.includes(socket.id)) {
             return [roomKey, true];
@@ -69,7 +69,8 @@ export const connectToSocket = (server) => {
       );
 
       if (found === true) {
-        if (messages[matchingRoom === undefined]) {
+        console.log("matchingRoom: ", matchingRoom);
+        if (messages[matchingRoom] === undefined) {
           messages[matchingRoom] = [];
         }
 
