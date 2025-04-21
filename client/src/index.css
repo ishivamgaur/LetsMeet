@@ -22,5 +22,5 @@
 /* For Firefox */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #5a5a5a #00000000;
+  scrollbar-color: #5a5a5a41 #00000000;
 }

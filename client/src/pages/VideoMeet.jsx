@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import { FaVideo } from "react-icons/fa";
 import { FaVideoSlash } from "react-icons/fa";
@@ -295,7 +296,7 @@ export const VideoMeet = () => {
     ]);
 
     if (socketIdSender !== socketIdRef.current) {
-      setMessages((prevMessages) => [...(prevMessages + 1)]);
+      setNewMessages((prevMessages) => prevMessages + 1);
     }
   };
 
@@ -517,7 +518,8 @@ export const VideoMeet = () => {
 
   // console.log("screen:", screen);
 
-  let sendMessage = () => {
+  let sendMessage = (e) => {
+    e.preventDefault();
     console.log(message);
     console.log("messages: ", messages);
     if (message.trim() !== "") {
@@ -526,14 +528,37 @@ export const VideoMeet = () => {
     }
   };
 
-  console.log(messages)
+  console.log(messages);
+
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  const routeTo = useNavigate();
+
+  const handleEndCall = () => {
+    try {
+      let tracks = localVideoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
+    } catch (error) {
+      console.log(error);
+    }
+
+    routeTo("/");
+  };
+
+  const [fullScreenId, setFullScreenId] = useState(null);
 
   return (
-    <div className="w-full h-screen p-10">
+    <div className="w-full h-screen">
       {/* Video meet component {window.location.href} */}
 
       {askForUsername === true ? (
-        <div className=" w-full h-full ">
+        <div className=" w-full h-full p-10 ">
           <h1 className="text-4xl">Enter into Lobby</h1>
           <div className="flex w-1/4  flex-col gap-1 overflow-hidden mt-4">
             <label htmlFor="username" className="text-gray-500 text-md">
@@ -579,25 +604,44 @@ export const VideoMeet = () => {
 
           {/* Remote Videos */}
           <div className="absolute top-0 h-full w-full flex gap-10 flex-wrap overflow-y-auto p-10">
-            {videos.map((video) => (
-              <div key={video.socketId} className="">
-                <h2>{video.socketId}</h2>
-                <video
-                  className="border-2 border-red-400 h-[350px] w-[450px] rounded-md object-contain"
-                  ref={(ref) => {
-                    if (ref && video.stream) {
-                      ref.srcObject = video.stream;
-                    }
-                  }}
-                  autoPlay
-                  muted
-                ></video>
-              </div>
-            ))}
+            {videos.map((video) => {
+              const isFull = fullScreenId === video.socketId;
+
+              return (
+                <div
+                  key={video.socketId}
+                  className={`cursor-pointer transition-all duration-300 
+                
+                  ${
+                    isFull
+                      ? "fixed  top-0 right-0 bottom-0 z-[1000000] w-full h-full flex items-center justify-center object-cover"
+                      : ""
+                  }
+                `}
+                  onClick={() =>
+                    setFullScreenId(isFull ? null : video.socketId)
+                  }
+                >
+                  {/* <h2>{video.socketId}</h2> */}
+                  <video
+                    className={`border-2 bg-black border-red-400 ${
+                      isFull ? "w-[96%] h-[95%]" : "h-[350px] w-[450px]"
+                    } rounded-md object-contain`}
+                    ref={(ref) => {
+                      if (ref && video.stream) {
+                        ref.srcObject = video.stream;
+                      }
+                    }}
+                    autoPlay
+                    muted
+                  ></video>
+                </div>
+              );
+            })}
           </div>
 
           {/* Icons */}
-          <div className="absolute bottom-5 text-center w-full flex items-center justify-center z-[1000]">
+          <div className="absolute bottom-0 text-center w-full flex items-center justify-center z-[1000]">
             <div className="flex items-center justify-center text-4xl gap-4 border-2 border-gray-600 w-max px-10 rounded-4xl py-2">
               <div onClick={handleVideo}>
                 {video === true ? (
@@ -606,7 +650,10 @@ export const VideoMeet = () => {
                   <FaVideoSlash className="cursor-pointer text-white" />
                 )}
               </div>
-              <MdCallEnd className="cursor-pointer text-red-500" />
+              <MdCallEnd
+                onClick={handleEndCall}
+                className="cursor-pointer text-red-500"
+              />
 
               <div onClick={handleAudio}>
                 {audio === true ? (
@@ -643,38 +690,47 @@ export const VideoMeet = () => {
             <div
               className={`chat-component  ${
                 showModel ? "scale-100" : "scale-0"
-              } absolute right-0 top-0 h-[80%] w-[400px] bg-gray-900 transition-all duration-300 p-5 border-2 border-gray-600 rounded-xl`}
+              } absolute right-0 top-0 bottom-20 z-[1000000000] w-[400px] bg-gray-900 transition-all duration-300 p-5 border-2 border-gray-600 rounded-xl`}
             >
               <div className="h-[85%] overflow-y-auto custom-scrollbar">
-                {/* <p className="px-2 mx-2 mb-2 py-1 bg-gray-950">Hello rishav</p>
-                <p className="px-2 mx-2 mb-2 py-1 bg-gray-950">Hello rishav</p>
-                <p className="px-2 mx-2 mb-2 py-1 bg-gray-950">Hello rishav</p>
-                 */}
-
-                {messages.map((message) => (
-                  <div>
-                    <p className="px-2">{message.sender} </p>
-                    <p className="px-2 mx-2 mb-2 py-1 bg-gray-950">
-                      Hello rishav
-                    </p>
+                {messages.length > 0 ? (
+                  messages.map((message) => (
+                    <div>
+                      <p className="px-2 text-sm font-semibold text-green-400 mb-1">
+                        {message.sender}
+                      </p>
+                      <p className="px-2 mx-2 mb-2 py-1 text-white bg-gray-950">
+                        {message.data}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex text-2xl text-gray-300 h-full justify-center">
+                    Enter message to start chatting
                   </div>
-                ))}
+                )}
+                {/* Scroll target */}
+                <div ref={bottomRef} />
               </div>
 
-              <div className="h-[10%] mt-[5%] flex border-2 border-gray-600 rounded-md overflow-hidden">
+              <form
+                onSubmit={sendMessage}
+                className="h-[10%] mt-[5%] flex border-2 border-gray-600 rounded-md overflow-hidden"
+              >
                 <input
                   type="text"
+                  required={true}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   className="border-none px-4 outline-none w-full h-full "
                 />
                 <button
+                  type="submit"
                   className="bg-green-800 hover:bg-green-900 transition-all duration-300 px-6 text-white cursor-pointer"
-                  onClick={sendMessage}
                 >
                   Send
                 </button>
-              </div>
+              </form>
             </div>
           </>
         </div>

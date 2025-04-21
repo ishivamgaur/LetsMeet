@@ -13,7 +13,7 @@ import VideoMeet from "./pages/VideoMeet.jsx";
 
 const App = () => {
   return (
-    <div className="relative bg-black text-gray-400">
+    <div className="relative custom-scrollbar bg-black text-gray-400">
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[700px] h-[200px] bg-blue-600 rounded-[500%] -rotate-45 blur-[150px] opacity-40 mix-blend-screen pointer-events-none" />
       <div className="absolute top-0 right-0 transform w-[100px] h-[100px] bg-red-600 rounded-[100%] blur-[50px] opacity-40 mix-blend-screen pointer-events-none" />
       <RouterProvider>
