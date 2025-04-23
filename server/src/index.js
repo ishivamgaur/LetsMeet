@@ -16,7 +16,7 @@ const server = createServer(app);
 const io = connectToSocket(server);
 
 const corsOptions = {
-  origin: "https://monumental-cassata-3c7734.netlify.app/", //deployed url
+  origin: "https://monumental-cassata-3c7734.netlify.app", //deployed url
   credentials: true,
 };
 

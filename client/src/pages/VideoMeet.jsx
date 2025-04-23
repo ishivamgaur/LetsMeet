@@ -11,7 +11,7 @@ import { MdStopScreenShare } from "react-icons/md";
 import { IoChatboxEllipsesSharp } from "react-icons/io5";
 import RemoteVideo from "../components/RemoteVideo.jsx";
 
-const server_url = "http://localhost:8000";
+const server_url = "https://letsmeet-t85e.onrender.com";
 
 const connections = {};
 
