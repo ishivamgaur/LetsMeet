@@ -16,7 +16,7 @@ const server = createServer(app);
 const io = connectToSocket(server);
 
 const corsOptions = {
-  origin: "http://localhost:5173", //deployed url
+  origin: "https://coruscating-frangollo-d241ef.netlify.app", //deployed url
   credentials: true,
 };
 
