@@ -26,7 +26,6 @@ const RemoteVideo = React.memo(
             isFullScreen ? "w-[96%] h-[95%]" : "h-[350px] w-[450px]"
           } rounded-md object-contain`}
           autoPlay
-          muted
         />
       </div>
     );

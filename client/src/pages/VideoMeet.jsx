@@ -588,7 +588,6 @@ export const VideoMeet = () => {
             <video
               className="bg-[#1871d124] border-2 scale-x-[-1] w-[450px] h-[340px] rounded-md object-cover "
               ref={localVideoRef}
-              muted
               autoPlay
             ></video>
           </div>
@@ -601,7 +600,6 @@ export const VideoMeet = () => {
               className="absolute z-[1000] bottom-20 left-10 border-2 h-[200px] w-[300px] rounded-md object-cover "
               ref={localVideoRef}
               autoPlay
-              muted
             ></video>
           </div>
 
