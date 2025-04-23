@@ -16,6 +16,23 @@ const Navbar = () => {
     },
   });
 
+  // Add interceptors for debugging
+  axiosInstance.interceptors.request.use((config) => {
+    console.log("Sending request to:", config.url);
+    return config;
+  });
+
+  axiosInstance.interceptors.response.use(
+    (response) => {
+      console.log("Received response:", response);
+      return response;
+    },
+    (error) => {
+      console.error("Request failed:", error.response?.data || error.message);
+      return Promise.reject(error);
+    }
+  );
+
   useEffect(() => {
     const checkAuth = async () => {
       try {

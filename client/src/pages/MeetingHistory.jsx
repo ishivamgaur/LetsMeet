@@ -56,7 +56,11 @@ const UserMeetingsHistory = () => {
   }, [userData, getUserHistory]);
 
   if (loading && userData) {
-    return <div>Loading...</div>;
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
   }
   return (
     <div className="w-full h-screen relative">
