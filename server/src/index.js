@@ -16,20 +16,14 @@ const server = createServer(app);
 const io = connectToSocket(server);
 
 const corsOptions = {
-  origin: [
-    "https://shivam-lets-meet.netlify.app",
-    "http://localhost:8000"
-  ], //deployed url
+  origin: ["https://shivam-lets-meet.netlify.app", "http://localhost:8000"], //deployed url
   credentials: true,
   exposedHeaders: ["set-cookie"], // Important for debugging
-  methods: "GET,POST,PUT,DELETE", // Add this
-  allowedHeaders: "Content-Type,Authorization" // Add this
 };
-
 
 app.use(cors(corsOptions));
 // This line specifically handles all OPTIONS requests
-app.options("/*", cors(corsOptions)); 
+app.options("/*", cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({ limit: "30kb" }));
 app.use(express.urlencoded({ limit: "30kb", extended: true }));
