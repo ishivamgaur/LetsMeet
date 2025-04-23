@@ -40,6 +40,7 @@ This is the complete documentation for **Let's Meet** — a real-time video conf
 - 🍪 Cross-site cookie support for auth check
 - 🧠 Passwords securely hashed with bcrypt
 - 📦 REST APIs for user actions and auth
+- 🕓 View Meeting History – Users can view their previously created or joined meetings with timestamps and titles
 
 ---
 
