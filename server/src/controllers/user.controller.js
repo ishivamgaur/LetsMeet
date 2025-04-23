@@ -43,7 +43,7 @@ const register = asyncHandler(async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // use true in prod
-    sameSite: "Lax",
+    sameSite: "none",
     maxAge: 60 * 60 * 1000, // 1 Hour
   });
 
@@ -86,7 +86,7 @@ const login = asyncHandler(async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // use true in prod
-    sameSite: "Lax",
+    sameSite: "none",
     maxAge: 60 * 60 * 1000, // 1 Hour
   });
 
