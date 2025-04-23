@@ -16,7 +16,7 @@ const server = createServer(app);
 const io = connectToSocket(server);
 
 const corsOptions = {
-  origin: "https://letsmeet-t85e.onrender.com/", //deployed url
+  origin: "https://letsmeetweb.onrender.com/", //deployed url
   credentials: true,
 };
 
