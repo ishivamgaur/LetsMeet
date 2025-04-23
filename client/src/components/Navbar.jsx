@@ -9,7 +9,7 @@ const Navbar = () => {
   let navigate = useNavigate();
 
   const axiosInstance = axios.create({
-    baseURL: "http://localhost:8000/api/v1/users",
+    baseURL: "https://letsmeet-t85e.onrender.com/api/v1/users",
     withCredentials: true,
   });
 
