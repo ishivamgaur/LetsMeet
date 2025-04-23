@@ -18,7 +18,7 @@ const io = connectToSocket(server);
 const corsOptions = {
   origin: ["https://shivam-lets-meet.netlify.app", "http://localhost:8000"], //deployed url
   credentials: true,
-  exposedHeaders: ["set-cookie"], // Important for debugging
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // include OPTIONS
 };
 
 app.use(cors(corsOptions));
