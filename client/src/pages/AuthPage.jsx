@@ -24,7 +24,7 @@ const AuthPage = () => {
     setError("");
   }, [formState]);
 
-  const { handleRegister, handleLogin } = useContext(AuthContext);
+  const { handleRegister, handleLogin, setUserData } = useContext(AuthContext);
 
   let handleAuth = async () => {
     try {
@@ -45,6 +45,7 @@ const AuthPage = () => {
         );
         console.log("RegistedUser: ", result.data);
         toast.success(result.data.message);
+        setUserData(result.data);
         setError("");
         setFormState(0);
       }

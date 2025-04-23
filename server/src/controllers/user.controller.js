@@ -5,6 +5,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import crypto from "crypto";
 import generateToken from "../utils/jwt.js";
+import { Meeting } from "../models/meeting.model.js";
 
 const register = asyncHandler(async (req, res) => {
   if (!req.body || Object.keys(req.body).length === 0) {
@@ -42,7 +43,7 @@ const register = asyncHandler(async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // use true in prod
-    sameSite: "Strict", 
+    sameSite: "Lax",
     maxAge: 60 * 60 * 1000, // 1 Hour
   });
 
@@ -85,7 +86,7 @@ const login = asyncHandler(async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // use true in prod
-    sameSite: "Strict",
+    sameSite: "Lax",
     maxAge: 60 * 60 * 1000, // 1 Hour
   });
 
@@ -100,4 +101,49 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
-export { register, login };
+const getUserHistory = asyncHandler(async (req, res) => {
+  const { user_id } = req.params;
+  console.log(user_id);
+
+  if (!user_id) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User ID is required");
+  }
+
+  const history = await Meeting.find({ user_id }).sort({ createdAt: -1 });
+
+  if (!history || history.length === 0) {
+    return res
+      .status(httpStatus.NOT_FOUND)
+      .json({ message: "No meeting history found" });
+  }
+  res.status(httpStatus.OK).json({ data: history });
+});
+
+const addToHistory = asyncHandler(async (req, res) => {
+  const { user_id, meeting_code } = req.body;
+
+  console.log("userId: ", user_id, "meetingCode: ", meeting_code);
+
+  if (!user_id || !meeting_code) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "User ID and Meeting Code are required"
+    );
+  }
+
+  const meeting = await Meeting.create({
+    user_id,
+    meeting_code,
+  });
+
+  if (!meeting) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Something went wrong");
+  }
+
+  res.status(httpStatus.CREATED).json({
+    message: "Meeting added to history",
+    data: meeting,
+  });
+});
+
+export { register, login, getUserHistory, addToHistory };

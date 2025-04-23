@@ -1,7 +1,10 @@
 import React from "react";
 import Navbar from "../components/Navbar.jsx";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  const routeTo = useNavigate();
+
   return (
     <div className=" bg-black w-full flex flex-col h-screen px-10">
       <Navbar />
@@ -18,7 +21,10 @@ const Home = () => {
                 Secure, fast, and reliable video meetings built with modern
                 tech.
               </h2>
-              <button className="text-xl border-2 border-blue-200 rounded-2xl hover:border-blue-500 px-7 py-3 text-blue-200 hover:text-white transition-all duration-300 cursor-pointer">
+              <button
+                onClick={() => routeTo("/create-room")}
+                className="text-xl border-2 border-blue-200 rounded-2xl hover:border-blue-500 px-7 py-3 text-blue-200 hover:text-white transition-all duration-300 cursor-pointer"
+              >
                 Get Started
               </button>
             </div>

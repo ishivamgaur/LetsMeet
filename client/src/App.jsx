@@ -10,6 +10,8 @@ import AuthPage from "./pages/AuthPage.jsx";
 import { ToastContainer, Zoom } from "react-toastify";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import VideoMeet from "./pages/VideoMeet.jsx";
+import CreateRoom from "./pages/CreateRoom.jsx";
+import MeetingHistory from "./pages/MeetingHistory.jsx";
 
 const App = () => {
   return (
@@ -21,8 +23,10 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="*" element={<ErrorPage />} />
+            <Route path="/create-room" element={<CreateRoom />} />
             <Route path="/:url" element={<VideoMeet />} />
+            <Route path="/user-meetings-history" element={<MeetingHistory />} />
+            <Route path="*" element={<ErrorPage />} />
           </Routes>
         </AuthProvider>
 

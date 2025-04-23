@@ -9,6 +9,7 @@ import { IoMdMicOff } from "react-icons/io";
 import { MdScreenShare } from "react-icons/md";
 import { MdStopScreenShare } from "react-icons/md";
 import { IoChatboxEllipsesSharp } from "react-icons/io5";
+import RemoteVideo from "../components/RemoteVideo.jsx";
 
 const server_url = "http://localhost:8000";
 
@@ -299,6 +300,8 @@ export const VideoMeet = () => {
       setNewMessages((prevMessages) => prevMessages + 1);
     }
   };
+
+  console.log("Show model: ", showModel);
 
   let connectToSocketServer = () => {
     socketRef.current = io.connect(server_url, { secure: false });
@@ -603,41 +606,26 @@ export const VideoMeet = () => {
           </div>
 
           {/* Remote Videos */}
-          <div className="absolute top-0 h-full w-full flex gap-10 flex-wrap overflow-y-auto p-10">
-            {videos.map((video) => {
-              const isFull = fullScreenId === video.socketId;
+          <div className="absolute top-0 w-full flex gap-10 flex-wrap overflow-y-auto p-10">
+            {videos.length > 0 ? (
+              videos.map((video) => {
+                const isFull = fullScreenId === video.socketId;
 
-              return (
-                <div
-                  key={video.socketId}
-                  className={`cursor-pointer transition-all duration-300 
-                
-                  ${
-                    isFull
-                      ? "fixed  top-0 right-0 bottom-0 z-[1000000] w-full h-full flex items-center justify-center object-cover"
-                      : ""
-                  }
-                `}
-                  onClick={() =>
-                    setFullScreenId(isFull ? null : video.socketId)
-                  }
-                >
-                  {/* <h2>{video.socketId}</h2> */}
-                  <video
-                    className={`border-2 bg-black border-red-400 ${
-                      isFull ? "w-[96%] h-[95%]" : "h-[350px] w-[450px]"
-                    } rounded-md object-contain`}
-                    ref={(ref) => {
-                      if (ref && video.stream) {
-                        ref.srcObject = video.stream;
-                      }
-                    }}
-                    autoPlay
-                    muted
-                  ></video>
-                </div>
-              );
-            })}
+                return (
+                  <RemoteVideo
+                    key={video.socketId}
+                    stream={video.stream}
+                    socketId={video.socketId}
+                    isFullScreen={isFull}
+                    onClick={() =>
+                      setFullScreenId(isFull ? null : video.socketId)
+                    }
+                  />
+                );
+              })
+            ) : (
+              <h1 className="text-3xl text-white ">Nodbody in the room</h1>
+            )}
           </div>
 
           {/* Icons */}
@@ -675,12 +663,19 @@ export const VideoMeet = () => {
               )}
               <div
                 className="relative cursor-pointer select-none"
-                onClick={() => setShowModel(!showModel)}
+                onClick={() => {
+                  setShowModel((prev) => !prev);
+                  if (!showModel) {
+                    setNewMessages(0);
+                  }
+                }}
               >
                 <IoChatboxEllipsesSharp className="cursor-pointer text-white" />
-                <p className="absolute bg-orange-600 text-white px-1 -top-2 -right-2 text-[19px] font-semibold w-auto h-auto rounded-full flex items-center justify-center">
-                  {newMessages}
-                </p>
+                {newMessages > 0 && (
+                  <p className="absolute bg-orange-600 text-white px-1 -top-2 -right-2 text-[19px] font-semibold w-auto h-auto rounded-full flex items-center justify-center">
+                    {newMessages}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -690,7 +685,7 @@ export const VideoMeet = () => {
             <div
               className={`chat-component  ${
                 showModel ? "scale-100" : "scale-0"
-              } absolute right-0 top-0 bottom-20 z-[1000000000] w-[400px] bg-gray-900 transition-all duration-300 p-5 border-2 border-gray-600 rounded-xl`}
+              } absolute right-10 top-10 bottom-20 z-[1000000000] w-[400px] bg-gray-900 transition-all duration-300 p-5 border-2 border-gray-600 rounded-xl`}
             >
               <div className="h-[85%] overflow-y-auto custom-scrollbar">
                 {messages.length > 0 ? (
