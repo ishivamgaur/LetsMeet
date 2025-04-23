@@ -16,7 +16,7 @@ const server = createServer(app);
 const io = connectToSocket(server);
 
 const corsOptions = {
-  origin: "https://coruscating-frangollo-d241ef.netlify.app", //deployed url
+  origin: "https://shivam-lets-meet.netlify.app", //deployed url
   credentials: true,
 };
 
