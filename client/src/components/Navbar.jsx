@@ -11,6 +11,9 @@ const Navbar = () => {
   const axiosInstance = axios.create({
     baseURL: "https://letsmeet-t85e.onrender.com/api/v1/users",
     withCredentials: true,
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 
   useEffect(() => {
@@ -32,7 +35,7 @@ const Navbar = () => {
     checkAuth();
   }, []);
 
-  console.log(authenticated);
+  console.log("IsAuthenticated: ", authenticated);
 
   const handleLogout = async () => {
     try {

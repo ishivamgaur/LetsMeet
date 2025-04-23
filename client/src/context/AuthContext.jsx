@@ -9,6 +9,9 @@ export const AuthContext = createContext();
 const client = axios.create({
   baseURL: "https://letsmeet-t85e.onrender.com/api/v1/users",
   withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 export const AuthProvider = ({ children }) => {

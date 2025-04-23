@@ -10,8 +10,12 @@ const UserMeetingsHistory = () => {
   const axiosInstance = axios.create({
     baseURL: "https://letsmeet-t85e.onrender.com/api/v1/users",
     withCredentials: true,
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 
+  // https://letsmeet-t85e.onrender.com/api/v1/users
   const location = useLocation();
   const navigate = useNavigate();
   const { getUserHistory } = useContext(AuthContext);
