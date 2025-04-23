@@ -44,6 +44,8 @@ const register = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // use true in prod
     sameSite: "none",
+    domain: "letsmeet-t85e.onrender.com", // Your exact backend domain
+    path: "/", // Available to all paths
     maxAge: 60 * 60 * 1000, // 1 Hour
   });
 
@@ -87,6 +89,8 @@ const login = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // use true in prod
     sameSite: "none",
+    domain: 'letsmeet-t85e.onrender.com', // Your exact backend domain
+    path: '/', // Available to all paths
     maxAge: 60 * 60 * 1000, // 1 Hour
   });
 
