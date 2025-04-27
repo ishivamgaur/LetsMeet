@@ -25,6 +25,7 @@ This is the complete documentation for **Let's Meet** — a real-time video conf
 - Express.js
 - MongoDB with Mongoose
 - JSON Web Token (JWT)
+- WebRTC
 - Socket.IO
 - bcryptjs
 - cookie-parser
