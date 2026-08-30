@@ -31,6 +31,11 @@ app.use(express.json({ limit: "30kb" }));
 app.use(express.urlencoded({ limit: "30kb", extended: true }));
 app.use("/api/v1/users", userRoutes);
 
+// Health Check Route
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "Server is running perfectly!" });
+});
+
 // Real-time online count — no socket needed
 app.get("/api/online-count", (req, res) => {
   res.json({
